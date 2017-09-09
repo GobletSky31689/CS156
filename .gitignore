@@ -89,3 +89,22 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+
+
+
+
+# Generated files
+*.iml
+
+# IntelliJ Files
+.idea
+.idea/workspace.xml
+local.properties
+thumbs.db
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+*.swp
