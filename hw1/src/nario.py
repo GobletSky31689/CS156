@@ -1,6 +1,5 @@
 import sys
 from collections import namedtuple
-from Queue import PriorityQueue
 
 BOARD_FILE = sys.argv[1]
 HEURISTIC = sys.argv[2]
@@ -14,13 +13,7 @@ MOVE_LEFT = 'left'
 MOVE_RIGHT = 'right'
 MOVE_TOP = 'top'
 STATE = namedtuple("STATE", ["x", "y"])
-NODE = namedtuple('NODE', ['state', 'path_cost', 'heuristic_cost'])
-
-
-class Actions:
-    def __init__(self):
-        pass
-    left, right, top = range(3)
+NODE = namedtuple('NODE', ['state', 'path_cost', 'heuristic_cost', "parent"])
 
 
 class FrontierList(list):
@@ -90,13 +83,6 @@ def get_heuristic_cost(state):
         return state.x
 
 
-def read_initial_state(board):
-    nario_pos = get_nario_pos(board)
-    initial_h_cost = get_heuristic_cost(nario_pos)
-    initial_path_cost = 0
-    return NODE(nario_pos, initial_path_cost, initial_h_cost)
-
-
 def get_possible_actions(state):
     actions = []
     current_floor = NARIO_WORLD[state.x]
@@ -112,7 +98,7 @@ def get_possible_actions(state):
     return actions
 
 
-def get_total_cost(prev_node, next_node):
+def get_action_cost(prev_node, next_node):
     return (prev_node.path_cost + 1) + get_heuristic_cost(next_node.state)
 
 
@@ -126,7 +112,14 @@ def perform_action(node, action):
         new_state = STATE(node.state.x, (node.state.y-1) % mod_w)
     else:
         new_state = STATE(node.state.x, (node.state.y+1) % mod_w)
-    return NODE(new_state, node.path_cost+1, get_heuristic_cost(new_state))
+    return NODE(new_state, node.path_cost+1, get_heuristic_cost(new_state), node)
+
+
+def remove_nario():
+    i = 0
+    for line in NARIO_WORLD:
+        NARIO_WORLD[i] = line.replace("@", ".")
+        i += 1
 
 
 def print_world(state):
@@ -137,22 +130,35 @@ def print_world(state):
         else:
             print row
         k += 1
+    print ""
+
+
+def get_solution(node):
+    solution = []
+    while True:
+        solution.insert(0, node.state)
+        if node.parent is None:
+            return solution
+        node = node.parent
 
 
 def perform_a_star_search():
-    node = NODE(INITIAL_STATE, path_cost=0, heuristic_cost=get_heuristic_cost(INITIAL_STATE))
+    node = NODE(state=INITIAL_STATE,
+                path_cost=0,
+                heuristic_cost=get_heuristic_cost(INITIAL_STATE),
+                parent=None)
     frontier = FrontierList()
     frontier.add_item(node)
     explored = set([])
-    percept_sequence = []
+    ind = 0
     while True:
+        ind += 1
         if len(frontier) == 0:
             return -1
         node = frontier.get_item()
-        percept_sequence.append(node)
         explored.add(node.state)
         if GOAL_TEST(node):
-            return percept_sequence
+            return get_solution(node)
         for action in POSSIBLE_ACTIONS(node.state):
             child = SUCCESSOR(node, action)
             if child.state not in explored and not frontier.has_item(child):
@@ -168,32 +174,17 @@ INITIAL_STATE = get_nario_pos(NARIO_WORLD)
 POSSIBLE_ACTIONS = get_possible_actions
 SUCCESSOR = perform_action
 GOAL_TEST = goal_check
-COST = get_total_cost
-
+COST = get_action_cost
 
 # Remove Nario from World
-def remove_nario():
-    i = 0
-    for line in NARIO_WORLD:
-        NARIO_WORLD[i] = line.replace("@", ".")
-        i += 1
 remove_nario()
 
 
 if __name__ == '__main__':
-    solution = perform_a_star_search()
-    if solution == -1:
+    precept_sequence = perform_a_star_search()
+    if precept_sequence == -1:
         print "NO PATH"
     else:
-        print "Found solution in %s steps\n" % len(solution)
-        for sol in solution:
-            print_world(sol.state)
-            print "\n"
-
-
-
-
-
-
-
-
+        # print "Found solution in %s steps\n" % len(precept_sequence)
+        for pos in precept_sequence:
+            print_world(pos)
