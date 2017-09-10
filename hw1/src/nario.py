@@ -154,7 +154,7 @@ def perform_a_star_search():
     while True:
         ind += 1
         if len(frontier) == 0:
-            return -1
+            return None
         node = frontier.get_item()
         explored.add(node.state)
         if GOAL_TEST(node):
@@ -182,9 +182,9 @@ remove_nario()
 
 if __name__ == '__main__':
     precept_sequence = perform_a_star_search()
-    if precept_sequence == -1:
+    if not precept_sequence:
         print "NO PATH"
     else:
-        # print "Found solution in %s steps\n" % len(precept_sequence)
+        print "Found solution in %s steps\n" % len(precept_sequence)
         for pos in precept_sequence:
             print_world(pos)
